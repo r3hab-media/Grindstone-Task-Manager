@@ -1,0 +1,45 @@
+html {
+  transition: background-color 0.2s, color 0.2s;
+}
+body {
+  font-variant-ligatures: none;
+}
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+.task.dragging {
+  opacity: 0.5;
+}
+.hdl {
+  cursor: grab;
+  user-select: none;
+  color: var(--bs-secondary);
+}
+.list-group.list-group-flush {
+  min-height: 120px;
+}
+
+.branding {
+  display: flex;
+  align-items: center;
+}
+
+img.branding__logo {
+  width: 60px;
+  height: auto;
+}
+
+.drop-hint {
+  height: 8px;
+  border: 1px dashed var(--bs-border-color);
+  border-radius: 0.25rem;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.small {
+  font-size: 0.875rem;
+}
