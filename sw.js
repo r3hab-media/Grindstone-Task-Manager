@@ -1,5 +1,6 @@
-const VERSION = "v11";
-const STATIC = `grindstone-${VERSION}`;
+// replace your VERSION/STATIC lines with:
+const BUILD = new URL(self.location).searchParams.get("v") || "dev";
+const STATIC = `grindstone-${BUILD}`;
 
 const BASE = new URL(self.registration.scope); // e.g. https://user.github.io/grindstone/
 const A = (p) => new URL(p, BASE).toString();

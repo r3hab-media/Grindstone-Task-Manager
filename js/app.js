@@ -1117,13 +1117,16 @@ function showUpdateBanner(onReload) {
 // --- Service worker registration ---
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", async () => {
-		const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+		const v = await fetch("./version.txt", { cache: "no-store" })
+			.then((r) => (r.ok ? r.text() : String(Date.now())))
+			.then((s) => s.trim())
+			.catch(() => String(Date.now()));
+
+		const reg = await navigator.serviceWorker.register(`./sw.js?v=${v}`, { scope: "./" });
 		reg?.update();
 
-		// show if an update is already waiting
 		if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: "SKIP_WAITING" }));
 
-		// show when a new worker finishes installing
 		reg.addEventListener("updatefound", () => {
 			const nw = reg.installing;
 			nw?.addEventListener("statechange", () => {
@@ -1133,7 +1136,6 @@ if ("serviceWorker" in navigator) {
 			});
 		});
 
-		// reload after SKIP_WAITING activates
 		navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
 	});
 }
