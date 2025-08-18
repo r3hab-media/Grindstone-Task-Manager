@@ -1061,34 +1061,15 @@ document.getElementById("toggleTimer").onclick = () => {
 	else startTimer();
 };
 
-// Keep this above your init IIFE
-if ("serviceWorker" in navigator) {
-	window.addEventListener("load", async () => {
-		const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-		reg?.update(); // check right away
-
-		// If a new SW is waiting, tell it to activate
-		if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
-
-		// When a new worker is installed, request activation
-		reg.addEventListener("updatefound", () => {
-			const nw = reg.installing;
-			nw?.addEventListener("statechange", () => {
-				if (nw.state === "installed" && navigator.serviceWorker.controller) {
-					reg.waiting?.postMessage({ type: "SKIP_WAITING" });
-				}
-			});
-		});
-
 // --- Bootstrap alert ---
 function showUpdateBanner(onReload) {
-  const id = 'update-banner';
-  if (document.getElementById(id)) return;
-  const div = document.createElement('div');
-  div.id = id;
-  div.className = 'alert alert-info alert-dismissible fade show shadow position-fixed start-50 translate-middle-x';
-  div.style.cssText = 'top:1rem;z-index:1080;max-width:720px;width:calc(100% - 2rem);';
-  div.innerHTML = `
+	const id = "update-banner";
+	if (document.getElementById(id)) return;
+	const div = document.createElement("div");
+	div.id = id;
+	div.className = "alert alert-info alert-dismissible fade show shadow position-fixed start-50 translate-middle-x";
+	div.style.cssText = "top:1rem;z-index:1080;max-width:720px;width:calc(100% - 2rem);";
+	div.innerHTML = `
     <div class="d-flex align-items-center justify-content-between">
       <div><strong>Update available.</strong> Reload to get the latest version.</div>
       <div class="d-flex gap-2">
@@ -1096,34 +1077,33 @@ function showUpdateBanner(onReload) {
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     </div>`;
-  document.body.appendChild(div);
-  document.getElementById('btnReloadNow').onclick = onReload;
+	document.body.appendChild(div);
+	document.getElementById("btnReloadNow").onclick = onReload;
 }
 
 // --- Service worker registration ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-    reg?.update();
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", async () => {
+		const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
+		reg?.update();
 
-    // show if an update is already waiting
-    if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: 'SKIP_WAITING' }));
+		// show if an update is already waiting
+		if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: "SKIP_WAITING" }));
 
-    // show when a new worker finishes installing
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw?.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          showUpdateBanner(() => reg.waiting?.postMessage({ type: 'SKIP_WAITING' }));
-        }
-      });
-    });
+		// show when a new worker finishes installing
+		reg.addEventListener("updatefound", () => {
+			const nw = reg.installing;
+			nw?.addEventListener("statechange", () => {
+				if (nw.state === "installed" && navigator.serviceWorker.controller) {
+					showUpdateBanner(() => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
+				}
+			});
+		});
 
-    // reload after SKIP_WAITING activates
-    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
-  });
+		// reload after SKIP_WAITING activates
+		navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+	});
 }
-
 
 /* ========= Init ========= */
 (async function init() {
