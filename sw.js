@@ -1,4 +1,4 @@
-const VERSION = "v10";
+const VERSION = "v11";
 const STATIC = `grindstone-${VERSION}`;
 
 const BASE = new URL(self.registration.scope); // e.g. https://user.github.io/grindstone/
@@ -19,7 +19,7 @@ const ASSETS = [
 
 self.addEventListener("install", (e) => {
 	e.waitUntil(caches.open(STATIC).then((c) => c.addAll(ASSETS)));
-	self.skipWaiting();
+	// self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
