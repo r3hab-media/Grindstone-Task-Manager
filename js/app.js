@@ -965,12 +965,13 @@ function onSearch() {
 
 // PWA install flow
 let deferredPrompt = null;
-const installBtn = document.getElementById("installBtn"); // <button id="installBtn" hidden>…</button>
+const installBtn = document.getElementById("installBtn");
 
 window.addEventListener("beforeinstallprompt", (e) => {
 	e.preventDefault();
 	deferredPrompt = e;
-	if (installBtn) installBtn.hidden = false;
+	installBtn.hidden = false;
+	console.log("bip fired");
 });
 
 installBtn?.addEventListener("click", async () => {
@@ -986,6 +987,19 @@ installBtn?.addEventListener("click", async () => {
 window.addEventListener("appinstalled", () => {
 	deferredPrompt = null;
 	installBtn?.setAttribute("hidden", "");
+	console.log("installed");
+});
+
+// quick sanity checks
+window.addEventListener("load", async () => {
+	console.log(
+		"manifest",
+		await fetch("./manifest.webmanifest")
+			.then((r) => r.status)
+			.catch(() => 0)
+	);
+	console.log("sw ctrl", !!navigator.serviceWorker.controller);
+	console.log("standalone", matchMedia("(display-mode: standalone)").matches);
 });
 
 /* ========= Wire up ========= */

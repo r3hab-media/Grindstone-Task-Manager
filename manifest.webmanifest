@@ -1,9 +1,9 @@
 {
   "name": "Grindstone",
   "short_name": "Grindstone",
-  "id": "/",
-  "start_url": "/index.html",
-  "scope": "/",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0b0f14",
   "theme_color": "#0b0f14",
