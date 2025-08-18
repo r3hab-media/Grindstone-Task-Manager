@@ -1050,7 +1050,7 @@ document.getElementById("toggleTimer").onclick = () => {
 // Keep this above your init IIFE
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", async () => {
-		const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+		const reg = await navigator.serviceWorker.register("./sw.js", { scope: "./" });
 		reg?.update(); // check right away
 
 		// If a new SW is waiting, tell it to activate

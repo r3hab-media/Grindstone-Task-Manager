@@ -1,12 +1,17 @@
-// sw.js
-const VERSION = "v4"; // bump on every deploy
+const VERSION = "v5";
 const STATIC = `grindstone-${VERSION}`;
+
+const BASE = new URL(self.registration.scope); // e.g. https://user.github.io/grindstone/
+const A = (p) => new URL(p, BASE).toString();
+
 const ASSETS = [
-	"/",
-	"/index.html",
-	"/manifest.webmanifest",
-	"/css/styles.css",
-	"/js/app.js",
+	A("./"),
+	A("./index.html"),
+	A("./manifest.webmanifest"),
+	A("./css/styles.css"),
+	A("./js/app.js"),
+	A("./icons/icon-192.png"),
+	A("./icons/icon-512.png"),
 	"https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css",
 	"https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/js/bootstrap.bundle.min.js",
 	"https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css",
@@ -14,7 +19,7 @@ const ASSETS = [
 
 self.addEventListener("install", (e) => {
 	e.waitUntil(caches.open(STATIC).then((c) => c.addAll(ASSETS)));
-	self.skipWaiting(); // take over without waiting
+	self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
@@ -22,7 +27,7 @@ self.addEventListener("activate", (e) => {
 		(async () => {
 			const keys = await caches.keys();
 			await Promise.all(keys.filter((k) => k !== STATIC).map((k) => caches.delete(k)));
-			await self.clients.claim(); // control all pages now
+			await self.clients.claim();
 		})()
 	);
 });
@@ -31,17 +36,13 @@ self.addEventListener("message", (e) => {
 	if (e.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-// Network-first for app shell; cache-first for everything else
+// SINGLE fetch handler (network-first for shell, cache-first otherwise)
+const SHELL = [A("./index.html"), A("./js/app.js")];
+
 self.addEventListener("fetch", (e) => {
-	const req = e.request;
-
-	const isAppShell = req.mode === "navigate" || new URL(req.url).pathname === "/index.html" || new URL(req.url).pathname === "/js/app.js";
-
-	if (isAppShell) {
-		e.respondWith(networkFirst(req));
-	} else {
-		e.respondWith(cacheFirst(req));
-	}
+	const url = e.request.url;
+	const isShell = e.request.mode === "navigate" || SHELL.includes(url);
+	e.respondWith(isShell ? networkFirst(e.request) : cacheFirst(e.request));
 });
 
 async function networkFirst(req) {
