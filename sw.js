@@ -1,4 +1,4 @@
-const VERSION = "v5";
+const VERSION = "v6";
 const STATIC = `grindstone-${VERSION}`;
 
 const BASE = new URL(self.registration.scope); // e.g. https://user.github.io/grindstone/
