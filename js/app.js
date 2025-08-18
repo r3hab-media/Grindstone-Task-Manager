@@ -970,24 +970,57 @@ const installBtn = document.getElementById("installBtn");
 window.addEventListener("beforeinstallprompt", (e) => {
 	e.preventDefault();
 	deferredPrompt = e;
-	installBtn.hidden = false;
-	console.log("bip fired");
+	installBtn.hidden = false; // show real installer UX
 });
 
 installBtn?.addEventListener("click", async () => {
-	if (!deferredPrompt) return;
-	installBtn.disabled = true;
-	deferredPrompt.prompt();
-	await deferredPrompt.userChoice;
-	deferredPrompt = null;
-	installBtn.hidden = true;
-	installBtn.disabled = false;
+	const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+	if (standalone) {
+		installBtn.hidden = true;
+		return;
+	}
+
+	if (deferredPrompt) {
+		installBtn.disabled = true;
+		deferredPrompt.prompt();
+		await deferredPrompt.userChoice;
+		deferredPrompt = null;
+		installBtn.hidden = true;
+		installBtn.disabled = false;
+		return;
+	}
+
+	// Fallback instructions when prompt isn't available
+	const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+	if (isiOS) {
+		alert("On iOS: Share ▸ Add to Home Screen");
+	} else {
+		alert("Use the browser menu: Install app / Add to taskbar");
+	}
+});
+
+// If BIP never fires, unhide after eligibility checks
+window.addEventListener("load", async () => {
+	const manifestOk = await fetch("./manifest.webmanifest", { cache: "no-store" })
+		.then((r) => r.ok)
+		.catch(() => false);
+	const swCtrl = !!navigator.serviceWorker.controller;
+	const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+
+	// show button if looks installable, hide only in standalone
+	if (!standalone && manifestOk && swCtrl) {
+		// If BIP hasn’t fired after a short delay, show fallback button
+		setTimeout(() => {
+			if (!deferredPrompt) installBtn.hidden = false;
+		}, 1200);
+	} else {
+		installBtn.hidden = true;
+	}
 });
 
 window.addEventListener("appinstalled", () => {
 	deferredPrompt = null;
 	installBtn?.setAttribute("hidden", "");
-	console.log("installed");
 });
 
 // quick sanity checks
