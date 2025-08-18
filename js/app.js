@@ -4,6 +4,9 @@
 
 const THEME_KEY = "tact_theme";
 
+const PREF_FMT = "__fmt";
+const PREF_TIMES = "__withTimes";
+
 function getPreferredTheme() {
 	const saved = localStorage.getItem(THEME_KEY);
 	if (saved === "light" || saved === "dark") return saved;
@@ -810,19 +813,50 @@ async function importJson(file) {
 }
 
 /* ========= Helpers ========= */
-function flash(msg, bad = false) {
-	const cont = el("#toastWrap");
-	const t = document.createElement("div");
-	t.className = `toast align-items-center text-bg-${bad ? "danger" : "success"} border-0`;
-	t.role = "status";
-	t.ariaLive = "polite";
-	t.ariaAtomic = "true";
-	t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
-	cont.appendChild(t);
-	const inst = new bootstrap.Toast(t, { delay: 1600 });
-	t.addEventListener("hidden.bs.toast", () => t.remove());
-	inst.show();
+// Put near other utilities
+function ensureFlashHost() {
+	let host = document.getElementById("flashHost");
+	if (!host) {
+		host = document.createElement("div");
+		host.id = "flashHost";
+		host.className = "position-fixed start-50 translate-middle-x";
+		host.style.zIndex = "1090"; // above navbar (BS navbar ~1020)
+		host.style.width = "min(720px, calc(100% - 2rem))";
+		const nav = document.querySelector(".navbar");
+		const top = (nav?.offsetHeight || 56) + 8; // sit below navbar
+		host.style.top = `${top}px`;
+		document.body.appendChild(host);
+		window.addEventListener("resize", () => {
+			const n = document.querySelector(".navbar");
+			host.style.top = `${(n?.offsetHeight || 56) + 8}px`;
+		});
+	}
+	return host;
 }
+
+function flash(msg, isError = false) {
+	const host = ensureFlashHost();
+	const el = document.createElement("div");
+	el.className = `alert ${isError ? "alert-danger" : "alert-success"} alert-dismissible fade show shadow`;
+	el.style.marginBottom = "0.5rem";
+	el.setAttribute("role", "status");
+	el.innerHTML = `
+    <div class="d-flex align-items-center justify-content-between">
+      <div>${msg}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>`;
+	host.appendChild(el);
+
+	// auto-dismiss
+	setTimeout(() => {
+		try {
+			bootstrap.Alert.getOrCreateInstance(el).close();
+		} catch {
+			el.remove();
+		}
+	}, 2000);
+}
+
 function toClipboard(s) {
 	return navigator.clipboard.writeText(s);
 }
@@ -1036,12 +1070,29 @@ window.addEventListener("load", async () => {
 });
 
 /* ========= Wire up ========= */
+document.querySelectorAll('input[name="fmt"]').forEach((r) => {
+	r.addEventListener("change", (e) => localStorage.setItem(PREF_FMT, e.target.value));
+});
+el("#withTimes").addEventListener("change", (e) => {
+	localStorage.setItem(PREF_TIMES, e.target.checked ? "1" : "0");
+});
 el("#addBtn").onclick = addFromQuick;
 el("#quick").addEventListener("keydown", (e) => {
 	if (e.key === "Enter") addFromQuick();
 });
 el("#search").addEventListener("input", onSearch);
 el("#closeDay").onclick = closeDay;
+el("#clearDone").onclick = async () => {
+	if (!confirm("Clear today’s done tasks?")) return;
+	const done = await DB.byDayStatus(todayKey(), "done");
+	for (const t of done) {
+		await DB.removeTask(t.id);
+		await log("edit", t.id, { action: "clearDone" });
+	}
+	flash("Cleared done"); // <— add this
+	renderAll();
+};
+
 el("#copyList").onclick = async () => {
 	const day = todayKey();
 	const done = await DB.byDayStatus(day, "done");
@@ -1115,29 +1166,28 @@ function showUpdateBanner(onReload) {
 }
 
 // --- Service worker registration ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    const v = await fetch('./version.txt', { cache: 'no-store' })
-      .then(r => r.ok ? r.text() : 'dev')
-      .then(s => s.trim())
-      .catch(() => 'dev');
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", async () => {
+		const v = await fetch("./version.txt", { cache: "no-store" })
+			.then((r) => (r.ok ? r.text() : "dev"))
+			.then((s) => s.trim())
+			.catch(() => "dev");
 
-    const reg = await navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(v)}`, { scope: './' });
-    reg?.update();
+		const reg = await navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(v)}`, { scope: "./" });
+		reg?.update();
 
-    if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: 'SKIP_WAITING' }));
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw?.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          showUpdateBanner(() => reg.waiting?.postMessage({ type: 'SKIP_WAITING' }));
-        }
-      });
-    });
-    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
-  });
+		if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: "SKIP_WAITING" }));
+		reg.addEventListener("updatefound", () => {
+			const nw = reg.installing;
+			nw?.addEventListener("statechange", () => {
+				if (nw.state === "installed" && navigator.serviceWorker.controller) {
+					showUpdateBanner(() => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
+				}
+			});
+		});
+		navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+	});
 }
-
 
 /* ========= Init ========= */
 (async function init() {
@@ -1163,6 +1213,13 @@ if ('serviceWorker' in navigator) {
 		renderAll();
 	});
 	installThemeToggle(); // call this before renderAll()
+
+	// restore copy/export prefs
+	const fmtSaved = localStorage.getItem(PREF_FMT) || "md";
+	document.querySelector(`input[name="fmt"][value="${fmtSaved}"]`)?.setAttribute("checked", "checked");
+
+	const timesSaved = localStorage.getItem(PREF_TIMES);
+	if (timesSaved != null) el("#withTimes").checked = timesSaved === "1";
 
 	renderAll();
 })();
