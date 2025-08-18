@@ -1115,30 +1115,29 @@ function showUpdateBanner(onReload) {
 }
 
 // --- Service worker registration ---
-if ("serviceWorker" in navigator) {
-	window.addEventListener("load", async () => {
-		const v = await fetch("./version.txt", { cache: "no-store" })
-			.then((r) => (r.ok ? r.text() : String(Date.now())))
-			.then((s) => s.trim())
-			.catch(() => String(Date.now()));
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    const v = await fetch('./version.txt', { cache: 'no-store' })
+      .then(r => r.ok ? r.text() : 'dev')
+      .then(s => s.trim())
+      .catch(() => 'dev');
 
-		const reg = await navigator.serviceWorker.register(`./sw.js?v=${v}`, { scope: "./" });
-		reg?.update();
+    const reg = await navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(v)}`, { scope: './' });
+    reg?.update();
 
-		if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: "SKIP_WAITING" }));
-
-		reg.addEventListener("updatefound", () => {
-			const nw = reg.installing;
-			nw?.addEventListener("statechange", () => {
-				if (nw.state === "installed" && navigator.serviceWorker.controller) {
-					showUpdateBanner(() => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
-				}
-			});
-		});
-
-		navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
-	});
+    if (reg.waiting) showUpdateBanner(() => reg.waiting.postMessage({ type: 'SKIP_WAITING' }));
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      nw?.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner(() => reg.waiting?.postMessage({ type: 'SKIP_WAITING' }));
+        }
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  });
 }
+
 
 /* ========= Init ========= */
 (async function init() {
