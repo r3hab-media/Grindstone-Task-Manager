@@ -57,6 +57,9 @@
         <button id="exportBtn" class="btn btn-outline-secondary" title="Export JSON">Export</button>
         <button id="importBtn" class="btn btn-outline-secondary">Import</button>
         <button id="settingsBtn" class="btn btn-outline-secondary">Settings</button>
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
+          <i class="bi bi-question-circle"></i> Help
+        </button>
         <button id="themeBtn" class="btn btn-outline-secondary" type="button" aria-pressed="false" title="Toggle theme">
           <i class="bi bi-moon"></i>
         </button>
@@ -235,6 +238,79 @@
 
   <!-- Toasts -->
   <div class="toast-container-fluid position-fixed top-0 start-50 translate-middle-x p-3" id="toastWrap"></div>
+  <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="helpTitle">Grindstone — Quick Guide</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h6>1) Quick start</h6>
+          <ul class="mb-3">
+            <li>Type in <strong>Quick Add</strong> and press <kbd>Enter</kbd>.</li>
+            <li>Drag to reorder. Drag between <strong>Today</strong> and <strong>Done</strong>.</li>
+            <li>Start work to move to <strong>In-progress</strong>; complete to move to <strong>Done</strong>.</li>
+          </ul>
+
+          <h6>2) Natural-language add</h6>
+          <p>Use: <code>@tag</code>, <code>#project</code>, <code>~30m</code>, <code>today</code>/<code>tomorrow</code>,
+            times like <code>3pm</code> or <code>15:00</code>. Paste multiple lines to batch-add.</p>
+          <p class="mb-3"><em>Example:</em> <code>Send report @ops #q3 ~30m today 3pm</code></p>
+
+          <h6>3) States & WIP</h6>
+          <ul class="mb-3">
+            <li>Flow: backlog → today → in-progress → done → carried-over.</li>
+            <li><strong>WIP limit</strong> blocks starting new work when reached. Adjust in Settings.</li>
+          </ul>
+
+          <h6>4) Close Day</h6>
+          <ul class="mb-3">
+            <li>Click <strong>Close Day</strong> to stamp completions, roll over unfinished, and copy a summary.</li>
+            <li>Choose <strong>Markdown</strong> or <strong>Plain text</strong> and <strong>Include times</strong>. Your
+              choices are remembered.</li>
+            <li>If it’s Monday, the summary includes the current ISO week number.</li>
+          </ul>
+
+          <h6>5) Keyboard</h6>
+          <div class="row row-cols-2 row-cols-md-3 g-2 mb-3">
+            <div><kbd>q</kbd> Quick Add</div>
+            <div><kbd>⌘/Ctrl</kbd> + <kbd>K</kbd> Command palette</div>
+            <div><kbd>Enter</kbd> Start first task</div>
+            <div><kbd>C</kbd> Complete first task</div>
+            <div><kbd>F</kbd> Focus/Now</div>
+            <div><kbd>D</kbd> Defer</div>
+            <div><kbd>Esc</kbd> Close dialogs</div>
+          </div>
+
+          <h6>6) Focus / Timer</h6>
+          <p>Focus/Now hides everything but the current task. Optional 25–50 min timer auto-logs time.</p>
+
+          <h6>7) Search, tags, projects</h6>
+          <p>Search matches title, notes, and tags. Use <code>@tag</code> and <code>#project</code> to organize.</p>
+
+          <h6>8) Data</h6>
+          <ul class="mb-3">
+            <li>Stores data locally in IndexedDB; works offline.</li>
+            <li><strong>Export</strong>/<strong>Import</strong> JSON for backup.</li>
+            <li>Optional notes encryption via WebCrypto (per-tab passphrase).</li>
+            <li>Immutable event log lets you reconstruct the day.</li>
+          </ul>
+
+          <h6>9) Tips</h6>
+          <ul class="mb-0">
+            <li>Use templates like <code>/standup</code>, <code>/code-review</code> in Quick Add.</li>
+            <li>Install as a PWA for an app-like experience and offline use.</li>
+            <li>When an update is available, you’ll see a blue banner; click <strong>Reload</strong>.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>
