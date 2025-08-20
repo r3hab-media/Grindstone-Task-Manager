@@ -861,6 +861,19 @@ function toClipboard(s) {
 	return navigator.clipboard.writeText(s);
 }
 
+async function saveFocusNotes() {
+  const id = state.focusTaskId;               // cache to avoid races
+  if (!id) { flash('No task in focus', true); return; }
+  const t = await idb.get('tasks', id);
+  if (!t) return;
+  const raw = el('#focusNotes').value;
+  t.notes = await encText(raw);
+  await DB.updateTask(t);
+  await log('edit', t.id, { action: 'saveNotes' });
+  flash('Notes saved');
+  renderAll();
+}
+
 /* ========= Keyboard + palette ========= */
 document.addEventListener("keydown", async (e) => {
 	const tag = e.target && /INPUT|TEXTAREA/.test(e.target.tagName);
@@ -1080,6 +1093,22 @@ el("#addBtn").onclick = addFromQuick;
 el("#quick").addEventListener("keydown", (e) => {
 	if (e.key === "Enter") addFromQuick();
 });
+// Focus notes save
+el("#saveNotes").onclick = saveFocusNotes;
+
+// Ctrl/Cmd+S inside notes textarea
+el("#focusNotes")?.addEventListener("keydown", (e) => {
+	if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+		e.preventDefault();
+		saveFocusNotes();
+	}
+});
+
+// Optional: clear focus state when modal closes
+document.getElementById("focusModal")?.addEventListener("hidden.bs.modal", () => {
+	state.focusTaskId = null;
+});
+
 el("#search").addEventListener("input", onSearch);
 el("#closeDay").onclick = closeDay;
 el("#clearDone").onclick = async () => {
